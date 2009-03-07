@@ -58,6 +58,7 @@ class VersioningTest < ActiveSupport::TestCase
     assert_equal 2, section.version
     section.update_attribute(:content, 'baz')    
     assert_equal 3, section.version
+    section.publish!
     section.reload
     assert_equal 3, section.version
     assert_equal 'baz', section.content
@@ -87,6 +88,7 @@ class VersioningTest < ActiveSupport::TestCase
 
     ActiveRecord::Base.locale = :de    
     assert_equal 2, section.version
+    section.publish!
     assert_equal 'bar (de)', section.content
   end
   
@@ -196,6 +198,7 @@ class VersioningTest < ActiveSupport::TestCase
     assert_equal 'baz', section.content
     assert_equal 3, section.version
     section.revert_to 1
+    section.publish!
     assert_equal 'foo', section.content
     assert_equal 1, section.version
     section.revert_to 2
@@ -247,6 +250,7 @@ class VersioningTest < ActiveSupport::TestCase
     
     ActiveRecord::Base.locale = :en
     section.revert_to 1
+    section.publish!
     assert_equal 'foo', section.content
     assert_equal 1, section.version
 
@@ -294,6 +298,7 @@ class VersioningTest < ActiveSupport::TestCase
     section.revert_to 2
 
     section.update_attribute :content, 'qux'
+    section.publish!
     assert_equal 'qux', section.content
     assert_equal 4, section.version
         
@@ -446,6 +451,7 @@ class VersioningTest < ActiveSupport::TestCase
     # reload from db
     section = Section.first
     assert_equal 1, section.version
+    section.publish!
     assert_equal 'bar', section.content
 
     assert_equal 1, section.versions.count
@@ -462,6 +468,7 @@ class VersioningTest < ActiveSupport::TestCase
     assert_equal 'qux', product.content
     assert_equal 2, product.version
     product = Product.first
+    section.publish!
     assert_equal 'baz', product.title
     assert_equal 'qux', product.content
     assert_equal 2, product.version
@@ -469,6 +476,7 @@ class VersioningTest < ActiveSupport::TestCase
   
   test 'no update if validation fails' do
     section = Section.create :content => 'foo'
+    section.publish!
     assert_equal 'foo', section.content
     section.content = ''
     assert !section.save
@@ -480,6 +488,7 @@ class VersioningTest < ActiveSupport::TestCase
     section.update_attribute :content, 'bar'
     assert section.update_attributes( {} )    
     section.revert_to 1
+    section.publish!
     assert section.update_attributes( {} )    
   end
 
@@ -487,6 +496,7 @@ class VersioningTest < ActiveSupport::TestCase
     section = Section.create :content => 'foo'
     assert !section.update_attributes( { :content => '' } )    
     assert_nil section.reload.attributes['content']
+    section.publish!
     assert_equal 'foo', section.content
   end
 

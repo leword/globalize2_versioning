@@ -60,6 +60,7 @@ class VersionedTest < ActiveSupport::TestCase
 
   test "translates subject and content into en-US" do
     section = Section.create :title => 'foo', :content => 'bar'
+    section.publish!
     assert_equal 'foo', section.title 
     assert_equal 'bar', section.content 
     assert section.save
@@ -85,6 +86,7 @@ class VersionedTest < ActiveSupport::TestCase
     section = Section.create :title => 'foo', :content => 'bar'
     assert section.save
     section = Section.first
+    section.publish!
     assert_equal 'foo', section.title 
     assert_equal 'bar', section.content 
   end
@@ -92,6 +94,7 @@ class VersionedTest < ActiveSupport::TestCase
   test "updates an attribute" do
     section = Section.create :title => 'foo', :content => 'bar'
     section.update_attribute :title, 'baz'
+    section.publish!
     section = Section.first
     assert_equal 'baz', Section.first.title 
   end
@@ -100,6 +103,7 @@ class VersionedTest < ActiveSupport::TestCase
     I18n.fallbacks.map :de => [ :'en-US' ]
     section = Section.create :title => 'foo', :content => 'bar'
     section.update_attribute :title, 'baz'
+    section.publish!
     assert_equal 'baz', section.title
 
     I18n.locale = :de
@@ -130,8 +134,10 @@ class VersionedTest < ActiveSupport::TestCase
     section.save
     I18n.locale = 'en-US'
     section = Section.first
+    section.publish!
     assert_equal 'foo', section.title 
     I18n.locale = 'de-DE'
+    section.publish!
     assert_equal 'bar', section.title 
   end
 
@@ -154,6 +160,7 @@ class VersionedTest < ActiveSupport::TestCase
     assert section.save
     I18n.locale = 'en-US'
     section = Section.first
+    section.publish!
     assert_equal 'foo', section.content 
     I18n.locale = 'de-DE'
     assert_equal 'bar', section.content 
@@ -207,6 +214,7 @@ class VersionedTest < ActiveSupport::TestCase
   test "returns nil if no translations are found; reloaded" do
     section = Section.create :content => 'foo'
     section = Section.first
+    section.publish!
     assert_equal 'foo', section.content
     assert_nil section.title
   end
