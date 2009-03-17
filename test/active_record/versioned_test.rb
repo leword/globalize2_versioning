@@ -60,6 +60,7 @@ class VersionedTest < ActiveSupport::TestCase
 
   test "translates subject and content into en-US" do
     section = Section.create :title => 'foo', :content => 'bar'
+    section.publish!
     assert_equal 'foo', section.title 
     assert_equal 'bar', section.content 
     assert section.save
@@ -73,11 +74,14 @@ class VersionedTest < ActiveSupport::TestCase
     section = Section.create :title => 'foo (en)', :content => 'bar'
     I18n.locale = 'de-DE'
     section = Section.first
+    section.include_drafts = true
     section.title = 'baz (de)'
-    assert section.save
-    assert_equal 'baz (de)', Section.first.title 
+    assert section.save!
+    section = Section.first; section.include_drafts = true
+    assert_equal 'baz (de)', section.title 
     I18n.locale = :'en-US'
-    assert_equal 'foo (en)', Section.first.title 
+    section = Section.first; section.include_drafts = true
+    assert_equal 'foo (en)', section.title 
   end
 
   test "saves an English section and loads test correctly" do
@@ -85,6 +89,7 @@ class VersionedTest < ActiveSupport::TestCase
     section = Section.create :title => 'foo', :content => 'bar'
     assert section.save
     section = Section.first
+    section.publish!
     assert_equal 'foo', section.title 
     assert_equal 'bar', section.content 
   end
@@ -92,6 +97,7 @@ class VersionedTest < ActiveSupport::TestCase
   test "updates an attribute" do
     section = Section.create :title => 'foo', :content => 'bar'
     section.update_attribute :title, 'baz'
+    section.publish!
     section = Section.first
     assert_equal 'baz', Section.first.title 
   end
@@ -100,6 +106,7 @@ class VersionedTest < ActiveSupport::TestCase
     I18n.fallbacks.map :de => [ :'en-US' ]
     section = Section.create :title => 'foo', :content => 'bar'
     section.update_attribute :title, 'baz'
+    section.publish!
     assert_equal 'baz', section.title
 
     I18n.locale = :de
@@ -125,11 +132,13 @@ class VersionedTest < ActiveSupport::TestCase
 
   test "returns the value for the correct locale, after locale switching" do
     section = Section.create :title => 'foo', :content => 'bar'
+    section.include_drafts = true
     I18n.locale = 'de-DE'
     section.title = 'bar'
     section.save
     I18n.locale = 'en-US'
     section = Section.first
+    section.include_drafts = true
     assert_equal 'foo', section.title 
     I18n.locale = 'de-DE'
     assert_equal 'bar', section.title 
@@ -154,6 +163,7 @@ class VersionedTest < ActiveSupport::TestCase
     assert section.save
     I18n.locale = 'en-US'
     section = Section.first
+    section.include_drafts = true
     assert_equal 'foo', section.content 
     I18n.locale = 'de-DE'
     assert_equal 'bar', section.content 
@@ -207,6 +217,7 @@ class VersionedTest < ActiveSupport::TestCase
   test "returns nil if no translations are found; reloaded" do
     section = Section.create :content => 'foo'
     section = Section.first
+    section.publish!
     assert_equal 'foo', section.content
     assert_nil section.title
   end

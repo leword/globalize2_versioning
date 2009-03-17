@@ -12,13 +12,16 @@ module Globalize
               if @record.save_version?
                 translation = translation.clone unless @record.new_record?        
                 translation.version = highest_version + 1
+                translation.published = false
               end
+              # update 'current' manually for publication system
+              
               if translation.new_record?
                 translation.class.update_all( [ 'current = ?', false ],
                   [ "current=? AND locale=? AND #{reference_field}=?",
                   true, locale.to_s, @record.id ] )
               else
-              translation.class.update_all( [ 'current = ?', false ],
+                translation.class.update_all( [ 'current = ?', false ],
                   [ "current=? AND locale=? AND #{reference_field}=? AND id != ?",
                   true, locale.to_s, @record.id, translation.id ] )
               end
@@ -31,8 +34,9 @@ module Globalize
           end
         end
         @stash.clear
-      end
-
+      end                                                  
+      
+      
       def highest_version(locale = ::ActiveRecord::Base.locale)
         @record.globalize_translations.maximum(:version, 
           :conditions => { :locale => locale.to_s, reference_field => @record.id }) || 0
@@ -49,6 +53,7 @@ module Globalize
           def globalize2_versioning
             if globalize_options[:versioned].blank?
               define_method :'versioned?', lambda { false }
+              define_method :'include_drafts?', lambda { false }
             else
               include Versioned::InstanceMethods
               extend  Versioned::ClassMethods
@@ -60,8 +65,10 @@ module Globalize
         end
         module Extensions
           def by_locales(locales)
-            if proxy_owner.versioned?
+            if proxy_owner.include_drafts?
               find :all, :conditions => { :locale => locales.map(&:to_s), :current => true }
+            elsif proxy_owner.versioned?
+              find :all, :conditions => { :locale => locales.map(&:to_s), :published => true }
             else
               find :all, :conditions => { :locale => locales.map(&:to_s) }
             end
@@ -94,7 +101,8 @@ module Globalize
               t.string :locale
               unless globalize_options[:versioned].blank?
                 t.integer     :version
-                t.boolean     :current                
+                t.boolean     :current    
+                t.boolean     :published            
               end
               fields.each do |name, type|
                 t.column name, type
@@ -111,12 +119,29 @@ module Globalize
         
         module InstanceMethods
           def versioned?; true end
-                    
-          def version(locale = self.class.locale)
+          
+          def include_drafts=(include_drafts)
+            if @include_drafts != include_drafts
+              globalize.clear
+              @include_drafts = include_drafts
+            end
+          end  
+          
+          def include_drafts?
+            @include_drafts
+          end              
+
+          def current_version(locale = self.class.locale)
             translation = globalize_translations.find_by_locale_and_current(locale.to_s, true)
             translation ? translation.version : nil
           end
+          alias_method :version, :current_version
           
+          def published_version(locale = self.class.locale)
+            translation = globalize_translations.find_by_locale_and_published(locale.to_s, true)
+            translation ? translation.version : nil
+          end
+
           def revert_to(version, locale = self.class.locale)
             version = version.to_i
             return true if version == self.version
@@ -132,7 +157,30 @@ module Globalize
             globalize.clear
             true
           end
-
+          
+          def publish_version(version, locale = self.class.locale)
+            version = version.to_i
+            return true if version == self.published_version
+            new_translation = globalize_translations.find_by_locale_and_version(locale.to_s, version)
+            return false unless new_translation
+            old_published = globalize_translations.find_by_locale_and_published(locale.to_s, true)
+            transaction do
+              if old_published
+                old_published.update_attribute :published, false
+              end
+              new_translation.update_attributes  :published => true, :published_at => Time.now
+            end
+            # clear out cache
+            globalize.clear
+            true
+          end
+          
+          def publish!(locale = self.class.locale)
+            if version = current_version
+              publish_version( current_version )
+            end
+          end    
+          
           def save_without_revision
             @no_revision = true
             result = save
@@ -205,6 +253,11 @@ module Globalize
           
           def empty?
             count == 0
+          end
+          
+          # FIXME: should implement Enumerable
+          def all
+            @rec.globalize_translations.find(:all, :conditions => [ 'locale = ?', @rec.class.locale.to_s ] )
           end
         end
                 

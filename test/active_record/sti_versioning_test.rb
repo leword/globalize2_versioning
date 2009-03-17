@@ -59,6 +59,7 @@ class StiVersioningTest < ActiveSupport::TestCase
     assert_equal 3, wiki.version
     wiki.reload
     assert_equal 3, wiki.version
+    wiki.publish!
     assert_equal 'baz', wiki.article
   end
   
@@ -85,6 +86,7 @@ class StiVersioningTest < ActiveSupport::TestCase
     assert_equal 3, wiki.version
 
     I18n.locale = :de    
+    wiki.publish!
     assert_equal 2, wiki.version
     assert_equal 'bar (de)', wiki.article
   end
@@ -115,9 +117,11 @@ class StiVersioningTest < ActiveSupport::TestCase
     assert_equal 'baz', wiki.article
     assert_equal 3, wiki.version
     wiki.revert_to 1
+    wiki.publish!
     assert_equal 'foo', wiki.article
     assert_equal 1, wiki.version
     wiki.revert_to 2
+    wiki.publish!
     assert_equal 'bar', wiki.article
     assert_equal 2, wiki.version
     
@@ -126,7 +130,7 @@ class StiVersioningTest < ActiveSupport::TestCase
     assert_equal 'bar', wiki.article
     assert_equal 2, wiki.version    
   end
-
+               
   test 'versioned_attributes method' do
     assert_equal [ :article ], Wiki.versioned_attributes
   end

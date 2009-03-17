@@ -58,6 +58,7 @@ class VersioningTest < ActiveSupport::TestCase
     assert_equal 2, section.version
     section.update_attribute(:content, 'baz')    
     assert_equal 3, section.version
+    section.publish!
     section.reload
     assert_equal 3, section.version
     assert_equal 'baz', section.content
@@ -87,13 +88,14 @@ class VersioningTest < ActiveSupport::TestCase
 
     ActiveRecord::Base.locale = :de    
     assert_equal 2, section.version
+    section.publish!
     assert_equal 'bar (de)', section.content
   end
   
   test 'current version with fallbacks' do
     I18n.fallbacks.map :de => [ :en ]
     section = Section.create :content => 'foo'
-    
+    section.include_drafts = true
     ActiveRecord::Base.locale = :de
     assert_equal 'foo', section.content
     assert_nil section.version
@@ -109,12 +111,14 @@ class VersioningTest < ActiveSupport::TestCase
 
     # load from db
     section = Section.first
+    section.include_drafts = true
     assert_equal 'bar', section.content
     assert_nil section.version
 
     # load from db, then switch locale
     ActiveRecord::Base.locale = :en
     section = Section.first
+    section.include_drafts = true
     ActiveRecord::Base.locale = :de
     assert_equal 'bar', section.content
     assert_nil section.version
@@ -123,6 +127,7 @@ class VersioningTest < ActiveSupport::TestCase
   test 'current current version with fallbacks -- current language has record' do
     I18n.fallbacks.map :de => [ :en ]
     section = Section.create :content => 'foo'
+    section.include_drafts = true
     
     ActiveRecord::Base.locale = :de
     assert_equal 'foo', section.content
@@ -137,6 +142,7 @@ class VersioningTest < ActiveSupport::TestCase
 
     # load from db
     section = Section.first
+    section.include_drafts = true
     assert_equal 'bar (de)', section.content
     assert_equal 1, section.version
 
@@ -146,12 +152,14 @@ class VersioningTest < ActiveSupport::TestCase
 
     # load from db
     section = Section.first
+    section.include_drafts = true
     assert_equal 'baz (de)', section.content
     assert_equal 2, section.version
 
     # load from db, then switch locale
     ActiveRecord::Base.locale = :en
     section = Section.first
+    section.include_drafts = true
     ActiveRecord::Base.locale = :de
     assert_equal 'baz (de)', section.content
     assert_equal 2, section.version
@@ -166,6 +174,7 @@ class VersioningTest < ActiveSupport::TestCase
     
     # load from db
     section = Section.first
+    section.include_drafts = true
     assert_equal 'baz', section.content
     assert_equal 3, section.version    
   end
@@ -191,6 +200,7 @@ class VersioningTest < ActiveSupport::TestCase
 
   test 'revert_to' do
     section = Section.create :content => 'foo'
+    section.include_drafts = true
     section.update_attribute :content, 'bar'    
     section.update_attribute :content, 'baz'
     assert_equal 'baz', section.content
@@ -204,6 +214,7 @@ class VersioningTest < ActiveSupport::TestCase
     
     # load from db
     section = Section.first
+    section.include_drafts = true
     assert_equal 'bar', section.content
     assert_equal 2, section.version    
   end
@@ -233,7 +244,8 @@ class VersioningTest < ActiveSupport::TestCase
   test 'revert_to with callbacks' do
     I18n.fallbacks.map :de => [ :en ]
   
-    section = Section.create :content => 'foo'
+    section = Section.create :content => 'foo'  
+    section.include_drafts = true
     section.update_attribute :content, 'bar'    
     section.update_attribute :content, 'baz'
     assert_equal 'baz', section.content
@@ -247,6 +259,7 @@ class VersioningTest < ActiveSupport::TestCase
     
     ActiveRecord::Base.locale = :en
     section.revert_to 1
+    section.publish!
     assert_equal 'foo', section.content
     assert_equal 1, section.version
 
@@ -261,6 +274,7 @@ class VersioningTest < ActiveSupport::TestCase
     
     # load from db
     section = Section.first
+    section.include_drafts = true
     assert_equal 'bar', section.content
     assert_equal 2, section.version    
 
@@ -278,6 +292,7 @@ class VersioningTest < ActiveSupport::TestCase
     ActiveRecord::Base.locale = :de
 
     section = Section.first
+    section.include_drafts = true
     assert_equal 1, section.version
     assert_equal 'baz (de)', section.content
 
@@ -294,11 +309,13 @@ class VersioningTest < ActiveSupport::TestCase
     section.revert_to 2
 
     section.update_attribute :content, 'qux'
+    section.publish!
     assert_equal 'qux', section.content
     assert_equal 4, section.version
         
     # load from db
     section = Section.first
+    section.include_drafts = true
     assert_equal 'qux', section.content
     assert_equal 4, section.version    
 
@@ -309,6 +326,7 @@ class VersioningTest < ActiveSupport::TestCase
         
     # load from db
     section = Section.first
+    section.include_drafts = true
     assert_equal 'baz', section.content
     assert_equal 3, section.version      
   end
@@ -446,6 +464,7 @@ class VersioningTest < ActiveSupport::TestCase
     # reload from db
     section = Section.first
     assert_equal 1, section.version
+    section.publish!
     assert_equal 'bar', section.content
 
     assert_equal 1, section.versions.count
@@ -462,6 +481,7 @@ class VersioningTest < ActiveSupport::TestCase
     assert_equal 'qux', product.content
     assert_equal 2, product.version
     product = Product.first
+    product.publish!
     assert_equal 'baz', product.title
     assert_equal 'qux', product.content
     assert_equal 2, product.version
@@ -469,6 +489,7 @@ class VersioningTest < ActiveSupport::TestCase
   
   test 'no update if validation fails' do
     section = Section.create :content => 'foo'
+    section.publish!
     assert_equal 'foo', section.content
     section.content = ''
     assert !section.save
@@ -480,6 +501,7 @@ class VersioningTest < ActiveSupport::TestCase
     section.update_attribute :content, 'bar'
     assert section.update_attributes( {} )    
     section.revert_to 1
+    section.publish!
     assert section.update_attributes( {} )    
   end
 
@@ -487,6 +509,7 @@ class VersioningTest < ActiveSupport::TestCase
     section = Section.create :content => 'foo'
     assert !section.update_attributes( { :content => '' } )    
     assert_nil section.reload.attributes['content']
+    section.publish!
     assert_equal 'foo', section.content
   end
 

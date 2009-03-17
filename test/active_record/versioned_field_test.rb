@@ -61,6 +61,7 @@ class VersionedFieldTest < ActiveSupport::TestCase
     assert_equal 'foo', section.content 
     assert section.save
     section.reload
+    section.publish!
     assert_equal 'foo', section.content 
   end
 
@@ -70,8 +71,10 @@ class VersionedFieldTest < ActiveSupport::TestCase
     section = Section.first
     section.content = 'baz (de)'
     section.save
+    section.publish!
     assert_equal 'baz (de)', Section.first.content 
     I18n.locale = :'en-US'
+    section.publish!
     assert_equal 'foo (en)', Section.first.content 
   end
 
@@ -80,12 +83,15 @@ class VersionedFieldTest < ActiveSupport::TestCase
     section = Section.create :content => 'foo'
     assert section.save
     section = Section.first
+    section.publish!
     assert_equal 'foo', section.content 
   end
 
   test "updates an attribute" do
     section = Section.create :content => 'foo'
+    section.publish!
     section.update_attribute :content, 'baz'
+    section.publish!
     assert_equal 'baz', Section.first.content 
   end
 
@@ -102,10 +108,13 @@ class VersionedFieldTest < ActiveSupport::TestCase
     I18n.locale = 'de-DE'
     section.content = 'bar'
     section.save
+    section.publish!
     I18n.locale = 'en-US'
     section = Section.first
+    section.publish!
     assert_equal 'foo', section.content 
     I18n.locale = 'de-DE'
+    section.publish!
     assert_equal 'bar', section.content 
   end
 
@@ -128,6 +137,7 @@ class VersionedFieldTest < ActiveSupport::TestCase
     section.save
     I18n.locale = 'en-US'
     section = Section.first
+    section.include_drafts = true
     assert_equal 'foo', section.content 
     I18n.locale = 'de-DE'
     assert_equal 'bar', section.content 
@@ -174,6 +184,7 @@ class VersionedFieldTest < ActiveSupport::TestCase
   test "returns nil if no translations are found; reloaded" do
     section = Section.create :content => 'foo'
     section = Section.first
+    section.publish!
     assert_equal 'foo', section.content
   end
   
