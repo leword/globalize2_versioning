@@ -482,7 +482,7 @@ class VersioningTest < ActiveSupport::TestCase
     assert_equal 'qux', product.content
     assert_equal 2, product.version
     product = Product.first
-    section.publish!
+    product.publish!
     assert_equal 'baz', product.title
     assert_equal 'qux', product.content
     assert_equal 2, product.version

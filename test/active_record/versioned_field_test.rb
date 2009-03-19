@@ -137,11 +137,7 @@ class VersionedFieldTest < ActiveSupport::TestCase
     section.save
     I18n.locale = 'en-US'
     section = Section.first
-<<<<<<< HEAD:test/active_record/versioned_field_test.rb
     section.include_drafts = true
-=======
-    section.publish!
->>>>>>> c3d6e361f4a440285d16bd560a3d5f848c67024a:test/active_record/versioned_field_test.rb
     assert_equal 'foo', section.content 
     I18n.locale = 'de-DE'
     assert_equal 'bar', section.content 

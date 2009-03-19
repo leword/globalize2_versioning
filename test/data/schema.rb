@@ -26,6 +26,7 @@ ActiveRecord::Schema.define do
     t.text        :content
     t.boolean     :current
     t.boolean     :published
+    t.boolean     :published_at
   end
   
   create_table :contents, :force => true do |t|
@@ -39,7 +40,8 @@ ActiveRecord::Schema.define do
     t.string      :title
     t.text        :article
     t.boolean     :current
-    t.boolean     :published
+    t.boolean     :published     
+    t.boolean     :published_at
   end  
 
   create_table :products, :force => true do |t|
@@ -53,6 +55,7 @@ ActiveRecord::Schema.define do
     t.text        :content
     t.boolean     :current
     t.boolean     :published
+    t.boolean     :published_at
   end  
 
 end
