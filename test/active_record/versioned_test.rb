@@ -141,6 +141,7 @@ class VersionedTest < ActiveSupport::TestCase
     section.include_drafts = true
     assert_equal 'foo', section.title 
     I18n.locale = 'de-DE'
+    section.publish!
     assert_equal 'bar', section.title 
   end
 

@@ -58,7 +58,6 @@ class PublishingTest < ActiveSupport::TestCase
     assert_equal 'bar', section.content
   end
   
-  
   test 'include_drafts' do 
     section = Section.create :content => 'foo'
     section.include_drafts = true  

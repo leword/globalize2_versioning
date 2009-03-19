@@ -119,6 +119,7 @@ module Globalize
         
         module InstanceMethods
           def versioned?; true end
+<<<<<<< HEAD:lib/globalize2_versioning.rb
           
           def include_drafts=(include_drafts)
             if @include_drafts != include_drafts
@@ -130,6 +131,8 @@ module Globalize
           def include_drafts?
             @include_drafts
           end              
+=======
+>>>>>>> c3d6e361f4a440285d16bd560a3d5f848c67024a:lib/globalize2_versioning.rb
 
           def current_version(locale = self.class.locale)
             translation = globalize_translations.find_by_locale_and_current(locale.to_s, true)
@@ -168,7 +171,11 @@ module Globalize
               if old_published
                 old_published.update_attribute :published, false
               end
+<<<<<<< HEAD:lib/globalize2_versioning.rb
               new_translation.update_attributes  :published => true, :published_at => Time.now
+=======
+              new_translation.update_attribute :published, true
+>>>>>>> c3d6e361f4a440285d16bd560a3d5f848c67024a:lib/globalize2_versioning.rb
             end
             # clear out cache
             globalize.clear
@@ -176,11 +183,29 @@ module Globalize
           end
           
           def publish!(locale = self.class.locale)
+<<<<<<< HEAD:lib/globalize2_versioning.rb
             if version = current_version
               publish_version( current_version )
             end
           end    
           
+=======
+            current_translation = globalize_translations.find_by_locale_and_current(locale.to_s, true)
+            return false unless current_translation
+            return true if current_translation.published
+            old_published = globalize_translations.find_by_locale_and_published(locale.to_s, true)
+            transaction do
+              if old_published 
+                old_published.update_attribute :published, false
+              end
+              current_translation.update_attribute :published, true
+            end
+            # clear out cache
+            globalize.clear
+            true
+          end
+
+>>>>>>> c3d6e361f4a440285d16bd560a3d5f848c67024a:lib/globalize2_versioning.rb
           def save_without_revision
             @no_revision = true
             result = save

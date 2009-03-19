@@ -206,6 +206,7 @@ class VersioningTest < ActiveSupport::TestCase
     assert_equal 'baz', section.content
     assert_equal 3, section.version
     section.revert_to 1
+    section.publish!
     assert_equal 'foo', section.content
     assert_equal 1, section.version
     section.revert_to 2
@@ -481,7 +482,7 @@ class VersioningTest < ActiveSupport::TestCase
     assert_equal 'qux', product.content
     assert_equal 2, product.version
     product = Product.first
-    product.publish!
+    section.publish!
     assert_equal 'baz', product.title
     assert_equal 'qux', product.content
     assert_equal 2, product.version
