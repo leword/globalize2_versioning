@@ -119,6 +119,10 @@ module Globalize
         
         module InstanceMethods
           def versioned?; true end
+               
+          def published?
+            !!published_version
+          end
           
           def include_drafts=(include_drafts)
             if @include_drafts != include_drafts
