@@ -124,6 +124,11 @@ module Globalize
             !!published_version
           end
           
+          def including_drafts
+            self.include_drafts = true
+            self
+          end
+          
           def include_drafts=(include_drafts)
             if @include_drafts != include_drafts
               globalize.clear
